@@ -1,22 +1,20 @@
-# ESP32 802.11 Freedom Output
+# `esp_wifi_80211_tx` sample code
 <img src="rickroll.png" alt="Rickrolling with WiFi Networks" width="400px"/>
 
-***Warning:** This project is currently incompatible with the latest version of [esp32-wifi-lib](https://github.com/espressif/esp32-wifi-lib). In order to get this working, you will need to downgrade to an older version, tested with esp32-wifi-lib git commit `ffe5a4c14fe9c933c776fadc62fa9d409929e6f9`.*
-
 ## Introduction
-Even though Espressif open sourced their [IoT Development Framework](https://github.com/espressif/esp-idf), the underlying [esp32-wifi-lib](https://github.com/espressif/esp32-wifi-lib) remains closed source and sparsely documented. Since I still wanted to be able to send arbitrary IEEE 802.11 data frames, I took a look at the `ieee80211_freedom_output` function in `ieee80211_output.o` in `libnet80211.a`. By reverse engineering the assembly code I was able to find a workaround / hack that makes it possible to use `ieee80211_freedom_output` and force the ESP32 to send data or management frames with custom data.
+Sending arbitrary IEEE 802.11 frames can be useful in various ways, e.g. for mesh networking, [unidirectional long-distance communication](https://www.youtube.com/watch?v=tBfa4yk5TdU) or low-overhead data transmission. It can, however, be abused for spamming large numbers of invalid SSIDs, jamming WiFi networks or sending deauthentication frames in order to sniff SSIDs of hidden wireless networks. Please be advised that such usage is morally doubtful at best and illegal at worst. Use this at your own risk.
 
-This functionality can be useful in various ways, e.g. for mesh networking, [unidirectional long-distance communication](https://www.youtube.com/watch?v=tBfa4yk5TdU) or low-overhead data transmission. It can, however, be abused for spamming large numbers of invalid SSIDs, jamming WiFi networks or sending deauthentication frames in order to sniff SSIDs of hidden wireless networks. Please be advised that such usage is morally doubtful at best and illegal at worst. Use this at your own risk.
+Espressif have now created an unofficial `esp_wifi_80211_tx` API, making [esp32free80211](https://github.com/Jeija/esp32free80211) obsolete. Since at the time of writing the only "documentation" for this function appears to be [this comment on a GitHub issue](https://github.com/espressif/esp-idf/issues/677#issuecomment-316315231) and many developers wanting to send arbitrary data with their ESP32s end up using [esp32free80211](https://github.com/Jeija/esp32free80211) with an outdated [esp-idf](https://github.com/espressif/esp-idf) version, I want to hereby provide some more up-to-date sample code using Espressif's new API.
 
 ## Project Description
-In order to demonstrate the freedom output functionality, this software broadcasts the infamous lines from Rick Astley's `Never gonna give you up`. This is achieved by manually assembling IEEE 802.11 beacon frames in `main.c` and broadcasting them via the hidden `ieee80211_freedom_output` function in espressif's WiFi stack.
+In order to demonstrate the freedom output functionality, this software broadcasts the infamous lines from Rick Astley's `Never gonna give you up`. This is achieved by manually assembling IEEE 802.11 beacon frames in `main.c` and broadcasting them via the currently unofficial `esp_wifi_80211_tx` API in Espressif's [esp32-wifi-lib](https://github.com/espressif/esp32-wifi-lib).
 
-If you want to use raw packet sending functionality in your own project, just copy the `components/free80211` component. The only function it exposes is the following:
-
+If you want to use raw packet sending functionality in your own project, just declare the `esp_wifi_80211_tx` function like this:
 ```C
-// buffer: Raw IEEE 802.11 packet to send, will be sent as-is, apart from bytes 24 - 31 which will be set to 0x00 in case buffer[0] is 0x80.
-// len: Length of IEEE 802.11 packet. Must be larger than 23 and smaller than or equal 0x578.
-int8_t free80211_send(uint8_t *buffer, uint16_t len);
+// buffer: Raw IEEE 802.11 packet to send
+// len: Length of IEEE 802.11 packet
+// en_sys_seq: "enable the system sequence" according to Espressif, not sure what this means
+esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 ```
 
 ### Compile / Flash

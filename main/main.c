@@ -8,7 +8,13 @@
 #include "nvs_flash.h"
 #include "string.h"
 
-#include "free80211.h"
+/*
+ * This is the (currently unofficial) 802.11 raw frame TX API,
+ * defined in esp32-wifi-lib's libnet80211.a/ieee80211_output.o
+ *
+ * This declaration is all you need for using esp_wifi_80211_tx in your own application.
+ */
+esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 
 uint8_t beacon_raw[] = {
 	0x80, 0x00,							// 0-1: Frame Control
@@ -77,7 +83,7 @@ void spam_task(void *pvParameter) {
 		if (seqnum[line] > 0xfff)
 			seqnum[line] = 0;
 
-		free80211_send(beacon_rick, sizeof(beacon_raw) + strlen(rick_ssids[line]));
+		esp_wifi_80211_tx(WIFI_IF_AP, beacon_rick, sizeof(beacon_raw) + strlen(rick_ssids[line]), false);
 
 		if (++line >= TOTAL_LINES)
 			line = 0;
@@ -86,32 +92,15 @@ void spam_task(void *pvParameter) {
 
 void app_main(void) {
 	nvs_flash_init();
+	tcpip_adapter_init();
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
 	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-
-	// Init dummy AP to get WiFi hardware into a mode where we can send the actual
-	// fake beacon frames.
-	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-	wifi_config_t ap_config = {
-		.ap = {
-			.ssid = "esp32-beaconspam",
-			.ssid_len = 0,
-			.password = "dummypassword",
-			.channel = 1,
-			.authmode = WIFI_AUTH_WPA2_PSK,
-			.ssid_hidden = 1,
-			.max_connection = 4,
-			.beacon_interval = 60000
-		}
-	};
-
-	ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
 	ESP_ERROR_CHECK(esp_wifi_start());
-	ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
 	xTaskCreate(&spam_task, "spam_task", 2048, NULL, 5, NULL);
 }
