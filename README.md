@@ -4,7 +4,7 @@
 ## Introduction
 Sending arbitrary IEEE 802.11 frames can be useful in various ways, e.g. for mesh networking, [unidirectional long-distance communication](https://www.youtube.com/watch?v=tBfa4yk5TdU) or low-overhead data transmission. It can, however, be abused for spamming large numbers of invalid SSIDs, jamming WiFi networks or sending deauthentication frames in order to sniff SSIDs of hidden wireless networks. Please be advised that such usage is morally doubtful at best and illegal at worst. Use this at your own risk.
 
-Espressif have now created an unofficial `esp_wifi_80211_tx` API, making [esp32free80211](https://github.com/Jeija/esp32free80211) obsolete. Since at the time of writing the only "documentation" for this function appears to be [this comment on a GitHub issue](https://github.com/espressif/esp-idf/issues/677#issuecomment-316315231) and many developers wanting to send arbitrary data with their ESP32s end up using [esp32free80211](https://github.com/Jeija/esp32free80211) with an outdated [esp-idf](https://github.com/espressif/esp-idf) version, I want to hereby provide some more up-to-date sample code using Espressif's new API.
+Espressif have now created the `esp_wifi_80211_tx` API, making [esp32free80211](https://github.com/Jeija/esp32free80211) obsolete. The new function is thoroughly documented **[in this document](https://github.com/espressif/esp-idf/blob/master/docs/api-guides/wifi.rst#wi-fi-80211-packet-send)**. Since at the time of writing not a lot of sample code using `esp_wifi_80211_tx` exists and many developers wanting to send arbitrary data with their ESP32s end up using [esp32free80211](https://github.com/Jeija/esp32free80211) with an outdated [esp-idf](https://github.com/espressif/esp-idf) version, I want to hereby provide some more up-to-date sample code for `esp_wifi_80211_tx`.
 
 ## Project Description
 In order to demonstrate the freedom output functionality, this software broadcasts the infamous lines from Rick Astley's `Never gonna give you up`. This is achieved by manually assembling IEEE 802.11 beacon frames in `main.c` and broadcasting them via the currently unofficial `esp_wifi_80211_tx` API in Espressif's [esp32-wifi-lib](https://github.com/espressif/esp32-wifi-lib).
@@ -13,7 +13,7 @@ If you want to use raw packet sending functionality in your own project, just de
 ```C
 // buffer: Raw IEEE 802.11 packet to send
 // len: Length of IEEE 802.11 packet
-// en_sys_seq: "enable the system sequence" according to Espressif, not sure what this means
+// en_sys_seq: see https://github.com/espressif/esp-idf/blob/master/docs/api-guides/wifi.rst#wi-fi-80211-packet-send for details
 esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq);
 ```
 
