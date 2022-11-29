@@ -1,6 +1,6 @@
 #include "freertos/FreeRTOS.h"
 
-#include "esp_event_loop.h"
+#include "esp_event.h"
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
@@ -50,10 +50,6 @@ char *rick_ssids[] = {
 #define SEQNUM_OFFSET 22
 #define TOTAL_LINES (sizeof(rick_ssids) / sizeof(char *))
 
-esp_err_t event_handler(void *ctx, system_event_t *event) {
-	return ESP_OK;
-}
-
 void spam_task(void *pvParameter) {
 	uint8_t line = 0;
 
@@ -91,12 +87,20 @@ void spam_task(void *pvParameter) {
 }
 
 void app_main(void) {
-	nvs_flash_init();
-	tcpip_adapter_init();
+    //Initialize NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    ESP_ERROR_CHECK(esp_netif_init());
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_create_default_wifi_ap();
 
 	wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
 
-	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 	ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 
