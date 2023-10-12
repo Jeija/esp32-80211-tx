@@ -124,5 +124,5 @@ void app_main(void) {
 	ESP_ERROR_CHECK(esp_wifi_start());
 	ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
 
-	xTaskCreate(&spam_task, "spam_task", 2048, NULL, 5, NULL);
+	xTaskCreate(&spam_task, "spam_task", 4096, NULL, 5, NULL);
 }
